@@ -219,38 +219,14 @@ public class CubaTokenList<T> extends CustomField<T> {
             }
         }
 
-        tokenContainer.removeAllComponents();
-
         //noinspection unchecked
         ValueSource<Collection<Entity>> valueSource = owner.getValueSource();
+        if (valueSource != null) {
+            Collection<Entity> newValue = CollectionUtils.isNotEmpty(valueSource.getValue())
+                    ? valueSource.getValue()
+                    : Collections.emptyList();
 
-        if (valueSource != null && CollectionUtils.isNotEmpty(valueSource.getValue())) {
-            List<Entity> usedItems = new ArrayList<>();
-
-            // New tokens
-            for (Entity entity : valueSource.getValue()) {
-                CubaTokenListLabel f = itemComponents.get(entity);
-                if (f == null) {
-                    f = createToken();
-                    itemComponents.put(entity, f);
-                    componentItems.put(f, entity);
-                }
-                f.setEditable(owner.isEditable());
-                f.setText(owner.getInstanceCaption(entity));
-                f.setWidthUndefined();
-
-                setTokenStyle(f, entity.getId());
-                tokenContainer.addComponent(f);
-                usedItems.add(entity);
-            }
-
-            // Remove obsolete items
-            for (Entity componentItem : new ArrayList<>(itemComponents.keySet())) {
-                if (!usedItems.contains(componentItem)) {
-                    componentItems.remove(itemComponents.get(componentItem));
-                    itemComponents.remove(componentItem);
-                }
-            }
+            refreshTokens(newValue);
         }
 
         if (getHeight() < 0) {
@@ -262,6 +238,42 @@ public class CubaTokenList<T> extends CustomField<T> {
         updateEditorMargins();
 
         updateSizes();
+    }
+
+    @SuppressWarnings("unchecked")
+    public void refreshTokens(Collection<? extends Entity> newValue) {
+        tokenContainer.removeAllComponents();
+
+        List<Entity> usedItems = new ArrayList<>();
+
+        // New tokens
+        for (Entity entity : newValue) {
+            CubaTokenListLabel label = itemComponents.get(entity);
+
+            if (label == null) {
+                label = createToken();
+                itemComponents.put(entity, label);
+                componentItems.put(label, entity);
+            }
+
+            label.setEditable(owner.isEditable());
+            label.setText(owner.getInstanceCaption(entity));
+            label.setWidthUndefined();
+
+            setTokenStyle(label, entity.getId());
+
+            tokenContainer.addComponent(label);
+
+            usedItems.add(entity);
+        }
+
+        // Remove obsolete items
+        for (Entity componentItem : new ArrayList<>(itemComponents.keySet())) {
+            if (!usedItems.contains(componentItem)) {
+                componentItems.remove(itemComponents.get(componentItem));
+                itemComponents.remove(componentItem);
+            }
+        }
     }
 
     protected void updateEditorMargins() {

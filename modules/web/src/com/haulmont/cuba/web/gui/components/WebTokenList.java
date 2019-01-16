@@ -152,12 +152,19 @@ public class WebTokenList<V extends Entity> extends WebV8AbstractField<CubaToken
     public void setValueSource(ValueSource<Collection<V>> valueSource) {
         super.setValueSource(valueSource);
 
-        if (valueSource != null) {
+        /*if (valueSource != null) {
             valueSource.addValueChangeListener(e -> {
                 component.refreshComponent();
                 component.refreshClickListeners(itemClickListener);
             });
-        }
+        }*/
+    }
+
+    @Override
+    public void setValue(Collection<V> value) {
+        super.setValue(value);
+
+        component.refreshTokens(value);
     }
 
     @Override
