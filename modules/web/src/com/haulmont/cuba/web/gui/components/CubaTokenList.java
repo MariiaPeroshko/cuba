@@ -32,9 +32,8 @@ import com.vaadin.ui.VerticalLayout;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.*;
-import java.util.function.Function;
 
-public class CubaTokenList<T> extends CustomField<T> {
+public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> {
 
     protected static final String TOKENLIST_STYLENAME = "c-tokenlist";
     protected static final String TOKENLIST_SCROLLBOX_STYLENAME = "c-tokenlist-scrollbox";
@@ -44,18 +43,18 @@ public class CubaTokenList<T> extends CustomField<T> {
     protected static final String INLINE_STYLENAME = "inline";
     protected static final String READONLY_STYLENAME = "readonly";
 
-    protected WebTokenList owner;
+    protected WebTokenList<T> owner;
 
     protected VerticalLayout composition;
     protected CubaScrollBoxLayout tokenContainer;
     protected HorizontalLayout editor;
 
-    protected Map<Entity, CubaTokenListLabel> itemComponents = new HashMap<>();
-    protected Map<CubaTokenListLabel, Entity> componentItems = new HashMap<>();
+    protected Map<T, CubaTokenListLabel> itemComponents = new HashMap<>();
+    protected Map<CubaTokenListLabel, T> componentItems = new HashMap<>();
 
     protected Subscription addButtonSub;
 
-    public CubaTokenList(WebTokenList owner) {
+    public CubaTokenList(WebTokenList<T> owner) {
         this.owner = owner;
 
         composition = new VerticalLayout();
@@ -76,12 +75,13 @@ public class CubaTokenList<T> extends CustomField<T> {
     }
 
     @Override
-    public T getValue() {
-        return null;
+    protected void doSetValue(Collection<T> value) {
+        refreshTokens(value);
     }
 
     @Override
-    protected void doSetValue(T value) {
+    public Collection<T> getValue() {
+        return null;
     }
 
     @Override
@@ -191,7 +191,6 @@ public class CubaTokenList<T> extends CustomField<T> {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public void refreshComponent() {
         if (owner.inline) {
             addStyleName(INLINE_STYLENAME);
@@ -219,20 +218,13 @@ public class CubaTokenList<T> extends CustomField<T> {
             }
         }
 
-        //noinspection unchecked
-        ValueSource<Collection<Entity>> valueSource = owner.getValueSource();
+        ValueSource<Collection<T>> valueSource = owner.getValueSource();
         if (valueSource != null) {
-            Collection<Entity> newValue = CollectionUtils.isNotEmpty(valueSource.getValue())
+            Collection<T> newValue = CollectionUtils.isNotEmpty(valueSource.getValue())
                     ? valueSource.getValue()
                     : Collections.emptyList();
 
             refreshTokens(newValue);
-        }
-
-        if (getHeight() < 0) {
-            tokenContainer.setVisible(!isEmpty());
-        } else {
-            tokenContainer.setVisible(true);
         }
 
         updateEditorMargins();
@@ -240,14 +232,17 @@ public class CubaTokenList<T> extends CustomField<T> {
         updateSizes();
     }
 
-    @SuppressWarnings("unchecked")
-    public void refreshTokens(Collection<? extends Entity> newValue) {
+    public void refreshTokens(Collection<T> newValue) {
         tokenContainer.removeAllComponents();
 
-        List<Entity> usedItems = new ArrayList<>();
+        if (newValue == null) {
+            newValue = Collections.emptyList();
+        }
+
+        List<T> usedItems = new ArrayList<>();
 
         // New tokens
-        for (Entity entity : newValue) {
+        for (T entity : newValue) {
             CubaTokenListLabel label = itemComponents.get(entity);
 
             if (label == null) {
@@ -268,11 +263,17 @@ public class CubaTokenList<T> extends CustomField<T> {
         }
 
         // Remove obsolete items
-        for (Entity componentItem : new ArrayList<>(itemComponents.keySet())) {
+        for (T componentItem : new ArrayList<>(itemComponents.keySet())) {
             if (!usedItems.contains(componentItem)) {
                 componentItems.remove(itemComponents.get(componentItem));
                 itemComponents.remove(componentItem);
             }
+        }
+
+        if (getHeight() < 0) {
+            tokenContainer.setVisible(!isEmpty());
+        } else {
+            tokenContainer.setVisible(true);
         }
     }
 
@@ -319,13 +320,12 @@ public class CubaTokenList<T> extends CustomField<T> {
     }
 
     public void refreshClickListeners(TokenList.ItemClickListener listener) {
-        //noinspection unchecked
-        ValueSource<Collection<Entity>> valueSource = owner.getValueSource();
+        ValueSource<Collection<T>> valueSource = owner.getValueSource();
         if (valueSource != null
                 && CollectionUtils.isNotEmpty(valueSource.getValue())
                 && BindingState.ACTIVE == valueSource.getState()) {
 
-            for (Entity entity : valueSource.getValue()) {
+            for (T entity : valueSource.getValue()) {
                 CubaTokenListLabel label = itemComponents.get(entity);
                 if (label != null) {
                     if (listener != null) {
@@ -350,9 +350,8 @@ public class CubaTokenList<T> extends CustomField<T> {
         return label;
     }
 
-    @SuppressWarnings("unchecked")
     protected void doRemove(CubaTokenListLabel source) {
-        Instance item = componentItems.get(source);
+        T item = componentItems.get(source);
         if (item != null) {
             itemComponents.remove(item);
             componentItems.remove(source);
@@ -360,9 +359,9 @@ public class CubaTokenList<T> extends CustomField<T> {
             if (owner.itemChangeHandler != null) {
                 owner.itemChangeHandler.removeItem(item);
             } else {
-                ValueSource<Collection<? extends Entity>> valueSource = owner.getValueSource();
+                ValueSource<Collection<T>> valueSource = owner.getValueSource();
                 if (valueSource != null) {
-                    Collection<Entity> value = owner.getValueSourceValue();
+                    Collection<T> value = owner.getValueSourceValue();
 
                     value.remove(item);
 
@@ -383,8 +382,7 @@ public class CubaTokenList<T> extends CustomField<T> {
 
     protected void setTokenStyle(CubaTokenListLabel label, Object itemId) {
         if (owner.tokenStyleGenerator != null) {
-            //noinspection unchecked
-            String styleName = ((Function<Object, String>) owner.getTokenStyleGenerator()).apply(itemId);
+            String styleName = owner.getTokenStyleGenerator().apply(itemId);
             if (styleName != null && !styleName.isEmpty()) {
                 label.setStyleName(styleName);
             }

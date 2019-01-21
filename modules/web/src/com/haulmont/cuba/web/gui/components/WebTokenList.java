@@ -50,7 +50,8 @@ import java.util.function.Supplier;
 
 import static com.haulmont.cuba.gui.WindowManager.OpenType;
 
-public class WebTokenList<V extends Entity> extends WebV8AbstractField<CubaTokenList<V>, V, Collection<V>>
+public class WebTokenList<V extends Entity>
+        extends WebV8AbstractField<CubaTokenList<V>, Collection<V>, Collection<V>>
         implements TokenList<V>, InitializingBean {
 
     private static final Logger log = LoggerFactory.getLogger(WebTokenList.class);
@@ -149,22 +150,11 @@ public class WebTokenList<V extends Entity> extends WebV8AbstractField<CubaToken
     }
 
     @Override
-    public void setValueSource(ValueSource<Collection<V>> valueSource) {
-        super.setValueSource(valueSource);
-
-        /*if (valueSource != null) {
-            valueSource.addValueChangeListener(e -> {
-                component.refreshComponent();
-                component.refreshClickListeners(itemClickListener);
-            });
-        }*/
-    }
-
-    @Override
     public void setValue(Collection<V> value) {
         super.setValue(value);
 
         component.refreshTokens(value);
+        component.refreshClickListeners(itemClickListener);
     }
 
     @Override
