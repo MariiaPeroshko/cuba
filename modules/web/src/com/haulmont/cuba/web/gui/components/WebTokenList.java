@@ -151,10 +151,36 @@ public class WebTokenList<V extends Entity>
 
     @Override
     public void setValue(Collection<V> value) {
-        super.setValue(value);
+        Collection<V> oldValue = getOldValue(value);
 
-        component.refreshTokens(value);
+        setValueToPresentation(convertToPresentation(value));
+
         component.refreshClickListeners(itemClickListener);
+
+        this.internalValue = value;
+
+        fireValueChange(oldValue, value);
+    }
+
+    protected Collection<V> getOldValue(Collection<V> newValue) {
+
+
+        return component.getValue();
+    }
+
+    protected void fireValueChange(Collection<V> oldValue, Collection<V> value) {
+        if (CollectionUtils.isEmpty(oldValue)
+                && CollectionUtils.isEmpty(value)) {
+            return;
+        }
+
+        if ((CollectionUtils.isEmpty(oldValue) && CollectionUtils.isNotEmpty(value))
+                || (CollectionUtils.isNotEmpty(oldValue) && CollectionUtils.isEmpty(value))
+                || CollectionUtils.isEqualCollection(oldValue, value)) {
+            ValueChangeEvent<Collection<V>> event =
+                    new ValueChangeEvent<>(this, oldValue, value, false);
+            publish(ValueChangeEvent.class, event);
+        }
     }
 
     @Override

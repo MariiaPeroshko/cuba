@@ -81,7 +81,7 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
 
     @Override
     public Collection<T> getValue() {
-        return null;
+        return itemComponents.keySet();
     }
 
     @Override
@@ -174,9 +174,7 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
         owner.clearButton.setVisible(owner.clearEnabled);
         owner.clearButton.setStyleName(CLEAR_BTN_STYLENAME);
         owner.clearButton.addClickListener(e -> {
-            for (CubaTokenListLabel item : new ArrayList<>(itemComponents.values())) {
-                doRemove(item);
-            }
+            clearValue();
             owner.clearButton.focus();
         });
 
@@ -188,6 +186,25 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
             editor.setExpandRatio(clearLayout, 1);
         } else {
             editor.addComponent(vClearButton);
+        }
+    }
+
+    protected void clearValue() {
+        for (CubaTokenListLabel label : new ArrayList<>(itemComponents.values())) {
+            T item = componentItems.get(label);
+            if (item != null) {
+                itemComponents.remove(item);
+                componentItems.remove(label);
+            }
+
+            if (owner.itemChangeHandler != null) {
+                owner.itemChangeHandler.removeItem(item);
+            }
+        }
+
+        if (owner.itemChangeHandler == null
+                && owner.getValueSource() != null) {
+            owner.getValueSource().setValue(Collections.emptyList());
         }
     }
 
