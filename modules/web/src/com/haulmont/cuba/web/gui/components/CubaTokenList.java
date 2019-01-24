@@ -87,8 +87,8 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
     @Override
     public boolean isEmpty() {
         return owner.getValueSource() != null
-                ? owner.getValueSourceValue().isEmpty()
-                : super.isEmpty();
+                ? CollectionUtils.isEmpty(owner.getValueSource().getValue())
+                : CollectionUtils.isEmpty(getValue());
     }
 
     @Override
@@ -202,10 +202,18 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
             }
         }
 
+        ValueSource<Collection<T>> valueSource = owner.getValueSource();
         if (owner.itemChangeHandler == null
-                && owner.getValueSource() != null) {
-            owner.getValueSource()
-                    .setValue(new ArrayList<>());
+                && valueSource != null) {
+            Collection<T> vsv = owner.getValueSourceValue();
+
+            if (Set.class.isAssignableFrom(vsv.getClass())) {
+                valueSource.setValue(new LinkedHashSet<>());
+            } else {
+                valueSource.setValue(new ArrayList<>());
+            }
+        } else {
+            owner.setValue(new ArrayList<>());
         }
     }
 
@@ -236,17 +244,8 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
             }
         }
 
-        ValueSource<Collection<T>> valueSource = owner.getValueSource();
-        if (valueSource != null) {
-            Collection<T> newValue = CollectionUtils.isNotEmpty(valueSource.getValue())
-                    ? valueSource.getValue()
-                    : Collections.emptyList();
-
-            refreshTokens(newValue);
-        }
-
+        updateTokenContainerVisibility();
         updateEditorMargins();
-
         updateSizes();
     }
 
@@ -259,7 +258,6 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
 
         List<T> usedItems = new ArrayList<>();
 
-        // New tokens
         for (T entity : newValue) {
             CubaTokenListLabel label = itemComponents.get(entity);
 
@@ -280,7 +278,6 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
             usedItems.add(entity);
         }
 
-        // Remove obsolete items
         for (T componentItem : new ArrayList<>(itemComponents.keySet())) {
             if (!usedItems.contains(componentItem)) {
                 componentItems.remove(itemComponents.get(componentItem));
@@ -288,6 +285,11 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
             }
         }
 
+        updateTokenContainerVisibility();
+        updateEditorMargins();
+    }
+
+    protected void updateTokenContainerVisibility() {
         if (getHeight() < 0) {
             tokenContainer.setVisible(!isEmpty());
         } else {

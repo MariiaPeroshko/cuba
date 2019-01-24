@@ -158,6 +158,8 @@ public class WebTokenList<V extends Entity>
                 : Collections.emptyList());
 
         setValueToPresentation(convertToPresentation(value));
+
+        component.refreshTokens(value);
         component.refreshClickListeners(itemClickListener);
 
         this.internalValue = value;
@@ -471,6 +473,15 @@ public class WebTokenList<V extends Entity>
                 }
 
                 valueSource.setValue(modelValue);
+            } else {
+                Collection<V> value = getValue();
+                if (value == null) {
+                    value = new ArrayList<>();
+                }
+
+                value.addAll(selected);
+
+                setValue(value);
             }
         }
     }
