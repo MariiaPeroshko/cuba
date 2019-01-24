@@ -204,7 +204,8 @@ public class CubaTokenList<T extends Entity> extends CustomField<Collection<T>> 
 
         if (owner.itemChangeHandler == null
                 && owner.getValueSource() != null) {
-            owner.getValueSource().setValue(Collections.emptyList());
+            owner.getValueSource()
+                    .setValue(new ArrayList<>());
         }
     }
 

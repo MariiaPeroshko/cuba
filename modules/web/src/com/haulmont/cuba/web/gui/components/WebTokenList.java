@@ -153,8 +153,11 @@ public class WebTokenList<V extends Entity>
     public void setValue(Collection<V> value) {
         Collection<V> oldValue = getOldValue(value);
 
-        setValueToPresentation(convertToPresentation(value));
+        oldValue = new ArrayList<>(oldValue != null
+                ? oldValue
+                : Collections.emptyList());
 
+        setValueToPresentation(convertToPresentation(value));
         component.refreshClickListeners(itemClickListener);
 
         this.internalValue = value;
@@ -163,24 +166,31 @@ public class WebTokenList<V extends Entity>
     }
 
     protected Collection<V> getOldValue(Collection<V> newValue) {
-
-
-        return component.getValue();
+        return equalCollections(newValue, internalValue)
+                ? component.getValue()
+                : internalValue;
     }
 
     protected void fireValueChange(Collection<V> oldValue, Collection<V> value) {
-        if (CollectionUtils.isEmpty(oldValue)
-                && CollectionUtils.isEmpty(value)) {
-            return;
-        }
-
-        if ((CollectionUtils.isEmpty(oldValue) && CollectionUtils.isNotEmpty(value))
-                || (CollectionUtils.isNotEmpty(oldValue) && CollectionUtils.isEmpty(value))
-                || CollectionUtils.isEqualCollection(oldValue, value)) {
+        if (!equalCollections(oldValue, value)) {
             ValueChangeEvent<Collection<V>> event =
                     new ValueChangeEvent<>(this, oldValue, value, false);
             publish(ValueChangeEvent.class, event);
         }
+    }
+
+    protected boolean equalCollections(Collection<V> a, Collection<V> b) {
+        if (CollectionUtils.isEmpty(a)
+                && CollectionUtils.isEmpty(b)) {
+            return true;
+        }
+
+        if ((CollectionUtils.isEmpty(a) && CollectionUtils.isNotEmpty(b))
+                || (CollectionUtils.isNotEmpty(a) && CollectionUtils.isEmpty(b))) {
+            return false;
+        }
+
+        return CollectionUtils.isEqualCollection(a, b);
     }
 
     @Override
