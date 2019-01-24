@@ -18,7 +18,6 @@
 package com.haulmont.cuba.core.sys.jpql;
 
 import com.haulmont.cuba.core.sys.jpql.antlr2.JPA2Lexer;
-import com.haulmont.cuba.core.sys.jpql.antlr2.JPA2Parser;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;

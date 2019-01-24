@@ -271,8 +271,8 @@ configure(globalModule) {
         compile(bom['com.google.code.findbugs:jsr305'])
         compile(bom['javax:javaee-api'])
         
-        compile(bom['antlr:antlr'])
-        compile(bom['org.antlr:antlr-runtime'])
+        compile(bom['org.antlr:antlr4'])
+        compile(bom['org.antlr:antlr4-runtime'])
         compile(bom['com.google.guava:guava'])
 
         compile(bom['org.eclipse.persistence:org.eclipse.persistence.jpa'])
